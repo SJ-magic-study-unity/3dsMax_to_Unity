@@ -20,7 +20,7 @@
 			
 ・	make animation.
 		Golem for BackStageで作成したAnimationについて、具体的な作成手順などは、
-			making_3dsMaxAnim_for_BackStage.png
+			making_3dsMaxAnim_for_BackStage.jpg
 		
 ・	Golem for BackStageでは、3ds maxからは、Animation情報のみ書き出し、3d modelは、unity側で用意する
 ・	Bipedは、FBX export時、非表示設定になる.
