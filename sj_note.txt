@@ -1,0 +1,150 @@
+/************************************************************
+************************************************************/
+■making 3ds max data.
+[環境]
+	・3ds max 2018
+		システム基本単位		1cm
+		ディスプレイ基本単位	1cm
+		
+	・unity 5.3.0
+	
+	
+[tips]
+・	Biped setting
+		脊椎のリンク(Pelvis) = 2
+		骨盤の三角リンク: off
+		首の三角リンク	: on
+		
+		->スケマティク ビューにて階層構造をcheck
+			cf.スケマティク：biped.png
+			
+・	make animation.
+		Golem for BackStageで作成したAnimationについて、具体的な作成手順などは、
+			making_3dsMaxAnim_for_BackStage.png
+		
+・	Golem for BackStageでは、3ds maxからは、Animation情報のみ書き出し、3d modelは、unity側で用意する
+・	Bipedは、FBX export時、非表示設定になる.
+	
+・	FBXの書き出し 1
+		file/書き出し
+		->autodesk fbx
+		
+		warningが出たので、animationをbakeしてoutputした(cf:output fbx.png)
+		physic modifierに関するwarningは無視(depricatedと言われた).
+		
+		外部textureを反映させる場合は、「メディアを埋め込む」check boxをon.
+		
+		その他のoptionはdefaultのまま.
+	
+
+[appendix]
+・	physic modifier
+		別ポリゴンを同じbipedにリンクさせる時：それぞれphysic modifierをaddすればOK.
+		頭などは、
+			頂点 - リンクの割り当て
+			x 変形可能
+			o リジッド
+		とすればOK.
+
+
+・	Bipedの接地キーについて
+		例えば、frame:0 にキーを設定した場合、max上では意図通りAnimationするが、FBXでは「キーなし」と同様の動作となった。
+		frame:0, frame:x(例えば 20)に打つと、所望の動作となった(接地キー自体は問題なく使えるようだ)。
+
+・	FBXの書き出し 2
+		file/書き出し：ゲームエクスポータ
+		http://artawa.hatenablog.com/entry/2017/04/30/235240
+		
+		note
+			書き出し 1で問題なかったので、特に使う必要はないが、こちらでも問題なく動作した.
+
+・	座標系の違い : FBXの書き出し 1
+		拡張オプション/ 軸変換
+			Up軸 = Y-up
+		がDefault設定になっており、Unity用の座標系に変換されていた。
+		
+		max 8の時は、これを指定するoptionがなかった。
+
+
+■上記modelのunityへの読み込み
+・	上記fbx fileをAssetへcopy.
+	Projectから、読み込まれたモデルを選択してinspectorのRigからHumanoidへ.
+	
+・	Configure/Muscles & Settingから
+	★★★★★ Additional Setting : Translation DOFをNo check ★★★★★
+	https://docs.unity3d.com/Manual/MuscleDefinitions.html
+	
+	->	Unity 5.3のバグで、GetHumanPose に以下の問題が報告されている.
+			https://unity3d.com/jp/unity/whats-new/unity-5.4.0
+			[788132] Animation: サポートされていないヒエラルキーでヒューマノイドアバターとともに GetHumanPose を使用すると、クラッシュする不具合を修正
+			
+		ためしに、5.6でtestしてみたら、確かに問題なく動作した.
+		しかし、syphonを使うため、5.3で動かす必要がある(OpenGL2の設定が、5.4以降なくなっている・・・).
+		But:上記の対策(Disable  Translation DOF)をすれば、crashは避けられた.
+
+・	Projectから、読み込まれたモデルを選択してinspectorのAnimation.
+	Frameを指定し、Animationを種類ごとに分ける(Animation clip).
+		Loop TimeにcheckでLoopになる.
+	また、walk animationについては、Root Transform Positin(XZ)をcheck.
+		->	otherwise:歩く度に、どんどん位置が進んで行ってしまう.
+	
+・	Project windowからAnimation Controllerを作成.
+	これをダブルクリックすると、Animator windowが立ち上がる.
+	読み込んだモデルには、先ほどのAnimation設定にて、Animation clipが定義されている(project windowにて確認 可)
+	これをAnimation windowに、Drag & Dropし、状態遷移を作成.
+	
+・	Hierarchyに、Target modelを配置
+・	Hierarchyに、読み込んだモデルを配置 : Bipedは表示されないので、Scene viewには、何も見えない
+・	Hierarchyに配置された、読み込み済みモデルを選択し、このAnimator componentのControllerに、
+	先ほど作成したAnimation Controllerをset.
+	
+	同じモデルに、AnimController.csをset.
+	
+・	Target modelにcopypose.csをsetし、inspectorをset.
+
+
+以上
+
+
+/************************************************************
+Animation clip inspector
+Root transform
+************************************************************/
+■ルートモーションの仕組み
+	https://docs.unity3d.com/jp/540/Manual/RootMotion.html
+	
+	contents
+		Root Transform Position (Y)
+			Feet オプションにより、高さを変える Animation Clip では便利です (Bake Into Pose が無効化されているとき)。 
+			Feet を使用するとき Root Transform Position Y はすべてのフレームでもっとも低い足の Y と一致します。
+			したがってブレンドされる場所は足の付近にあり、ブレンディングや遷移のときに浮いてしまう問題は回避できます。
+			
+			注)本設定は、animation clipごとに存在する.
+			
+			
+■アニメーションクリップ
+	https://docs.unity3d.com/ja/540/Manual/class-AnimationClip.html
+	
+
+■Unity : アニメーションとGameObjectの位置を同期させたい時に気をつけること			
+	http://indie-du.com/entry/2016/05/14/095612
+	
+	contents
+		Root Transform Position (Y)のBake Into Pose にチェック.
+		インスペクタの値を眺めていると、Y座標が0のままであることがわかります。
+
+		これの何がまずいかって、何らかのコライダーを付けている場合、コライダーのY座標が変わらないんですよ。
+		つまり、ジャンプしているように見えるのに、足元の障害物に引っ掛かってしまうという状況が発生してしまいます。
+		
+		BakeIntoPoseのチェックを外すことで、アニメーションとGameObjectの位置の同期がとれます。
+		もちろんApplyRootMotionのチェックも入れます。
+
+
+
+/************************************************************
+IK/ FK
+************************************************************/
+■
+
+
+
