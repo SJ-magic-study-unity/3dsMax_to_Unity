@@ -68,7 +68,8 @@
 
 ■上記modelのunityへの読み込み
 ・	上記fbx fileをAssetへcopy.
-	Projectから、読み込まれたモデルを選択してinspectorのRigからHumanoidへ.
+
+・	Projectから、読み込まれたモデルを選択してinspectorのRigからHumanoidへ.
 	
 ・	Configure/Muscles & Settingから
 	★★★★★ Additional Setting : Translation DOFをNo check ★★★★★
